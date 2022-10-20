@@ -1,0 +1,30 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>汽车喷漆</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+</head>
+
+<body style="margin:0">
+
+
+<div id="main">
+
+    <input type="button" value="逆时针" onclick="changeImg()" >
+
+</div>
+
+<script type="text/javascript">
+
+
+	function changeImg(p){
+		alert(38);
+
+	}
+
+
+</script>
+
+</html>

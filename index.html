@@ -1,0 +1,228 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>汽车喷漆</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
+
+<body style="margin:0">
+    <div id="main">
+        <div id="autodiv" style="position:absolute;width:100%;text-align:center">
+            <img id="carImg0" src="0.png"   style="width:100%;height:auto;">
+            <img id="carImg1" src="1.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg2" src="2.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg3" src="3.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg4" src="4.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg5" src="5.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg6" src="6.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg7" src="7.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg8" src="8.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg9" src="9.png"   style="width:100%;height:auto;display:none">
+            <img id="carImg10" src="10.png" style="width:100%;height:auto;display:none">
+            <img id="carImg11" src="11.png" style="width:100%;height:auto;display:none">
+        </div>
+        <div id="map" ></div>
+    <input type="button" value="逆时针" style="position:absolute;top:570px;" onclick="changeImg(1)" >
+    <input type="button" value="顺时针" style="position:absolute;top:570px;left:100px"" onclick="changeImg(-1)" >
+    <input type="button" value="清空坐标数据" style="position:absolute;top:570px;left:200px" onclick="cleardata()" >
+    <input type="button" value="整车喷漆" style="position:absolute;top:570px;left:310px" onclick="zhengChePenqi(1)" >
+    <input type="button" value="整车取消喷漆" style="position:absolute;top:570px;left:410px" onclick="zhengChePenqi(0)" >
+    <div  style="position:absolute;top:570px;left:450px" id="disindex" >0</div>
+    <div  id="data" style="width:1000px;position:absolute;top:500px;padding:5px"></div>
+    </div>
+</body>
+</html>
+<script type="text/javascript" src="raphael.min.js"></script>
+<script type="text/javascript" src="carPath.js"></script>
+<script type="text/javascript">
+	var direction = 0;
+	var R ;
+	var sels = {};
+	var scr;
+	var markColor = "#397FE0"; //覆盖颜色
+	var markAlpha = 0.5; //覆盖透明度
+	window.onload = function () {
+	    var o = document.getElementById("autodiv");
+        var w = o.offsetWidth;
+        var h = o.offsetHeight;
+        var bili =parseFloat(w)/1000;
+		R = Raphael("map", w, h);
+        drawArea(R,0,car);
+        var main = document.getElementById("map");
+        setTouch(main);
+	}
+
+	function changeImg(p){
+		var carImg = document.getElementById("carImg"+direction);
+		carImg.style.display = "none";
+		var len = imgList.length-1;
+		if(p>0){
+			direction = direction+1>len?0:(direction+1);
+		}else{
+			direction = direction-1<0?len:(direction-1);
+		}
+        carImg = document.getElementById("carImg"+direction);
+		carImg.style.display = "";
+		drawArea(R,direction,car);
+	}
+
+	function xuanzhuan(){
+		changeImg(1);
+		scr = setTimeout("xuanzhuan()",200);
+	}
+
+	function drawArea(R,index,car){
+	    if(!car)return;
+		R.clear();
+		paintMap(R,index);
+
+		for (var state in  car) {
+			car[state]['path'].color = Raphael.getColor(0.9);
+			(function (st, state) {
+				//获取当前图形的中心坐标
+				var xx = st.getBBox().x + (st.getBBox().width / 2);
+				var yy = st.getBBox().y + (st.getBBox().height / 2);
+				st[0].ismap = 1;
+				st.startx = -1;
+				st.touchstart(
+				    function(e){
+                        st.startx = e.touches[0].clientX;
+				    }
+				);
+
+                st.touchmove(
+					function(e){
+					    e.preventDefault();
+					    e.stopPropagation();
+                        var xx = e.touches[0].clientX;
+                        var x = st.startx;
+                        var _d = 5;
+                        if(xx-x>_d){
+                            changeImg(1);
+                            st.startx = xx;
+                        }else if (x-xx>_d){
+                            changeImg(-1);
+                            st.startx = xx;
+                        }
+					}
+				);
+				st[0].onclick = function () {
+
+				   var attr = {
+						"fill": markColor,
+						"fill-opacity":markAlpha,
+						"stroke": "#eee",
+						"stroke-width": 0,
+						"stroke-opacity":0,
+						"stroke-linejoin": "round"
+					};
+				   var s = 1;
+
+				   if(sels[car[state]['code']]){
+					   attr['fill-opacity'] = 0;
+                       delete sels[car[state]['code']];
+                       st.attr(attr);
+					   s = 0;
+				   }else{
+					   attr['fill-opacity'] = markAlpha;
+					   sels[car[state]['code']] = 1;
+					   st.attr(attr);
+					   s = 1;
+				   }
+				    var _code = car[state]['code'].replace("c","");
+				    var _name = car[state]['name'];
+
+				    //车的部分喷漆或取消时alert返回数据  如:“车前盖,11,1”代表code为11的车前盖喷漆  车前盖,11,0”代表code为11的车前盖取消喷漆
+					alert(_name+","+_code+","+s);
+				};
+
+                //保存状态
+				if(sels[car[state]['code']]){
+					var attr = {
+						"fill": markColor,
+						"fill-opacity":markAlpha,
+						"stroke": "#eee",
+						"stroke-width": 0,
+						"stroke-opacity":0,
+						"stroke-linejoin": "round"
+					};
+					st.attr(attr);
+					//R.safari();
+				}
+
+			 })(car[state]['path'], state);
+		}
+	}
+
+
+	function setTouch(dom){
+		dom.addEventListener('touchstart',touch,true);
+		dom.addEventListener('touchmove',touch,true);
+		dom.addEventListener('touchend',touch,true);
+		var x = -1;
+		function touch (event){
+			var event = event || window.event;
+			var _dom = event.target;
+            if(_dom.ismap)return;
+
+			switch(event.type){
+				case "touchstart":
+					x = event.touches[0].clientX;
+					cx = event.touches[0].clientX;
+					break;
+				case "touchend":
+					break;
+				case "touchmove":
+					event.preventDefault();
+					var xx = event.touches[0].clientX;
+					var _d = 5;
+					if(xx-x>_d){
+					    changeImg(1);
+					    x = xx;
+					}else if (x-xx>_d){
+					    changeImg(-1);
+					    x = xx;
+					}
+
+					break;
+			}
+		}
+	 }
+
+    //小部件取消
+    function xbjCancel(code){
+        code = "c"+code;
+        delete sels[code];
+        drawArea(R,direction,car);
+    }
+
+
+    //小部件选择
+    function xbjSel(code){
+        code = "c"+code;
+        sels[code]=1;
+        drawArea(R,direction,car);
+    }
+
+
+    //整车喷漆（取消喷漆）s参数  1:整车喷漆  0:整车取消
+    function zhengChePenqi(s){
+        var str = "";
+        for (var state in car) {
+            var c = car[state]['code'];
+            if(s){
+                sels[c]=1;
+            }else{
+                delete sels[c];
+            }
+            str +=car[state]['name']+","+car[state]['code'].replace("c","")+","+s+";"
+        }
+        drawArea(R,direction,car);
+
+        //返回全车部件喷漆字符串,
+        alert(str);
+    }
+
+</script>
+

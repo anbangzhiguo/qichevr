@@ -1,0 +1,217 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>汽车喷漆</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+</head>
+
+<body style="margin:0">
+
+
+<div id="main">
+    <div id="autodiv" style="position:absolute;width:100%;text-align:center">
+        <img id="carImg0" src="0.png"   style="width:100%;height:auto;">
+        <img id="carImg1" src="1.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg2" src="2.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg3" src="3.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg4" src="4.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg5" src="5.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg6" src="6.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg7" src="7.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg8" src="8.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg9" src="9.png"   style="width:100%;height:auto;display:none">
+        <img id="carImg10" src="10.png" style="width:100%;height:auto;display:none">
+        <img id="carImg11" src="11.png" style="width:100%;height:auto;display:none">
+    </div>
+    <div id="map" ></div>
+    <input type="button" value="逆时针" style="position:absolute;top:570px;" onclick="changeImg(1)" >
+    <input type="button" value="顺时针" style="position:absolute;top:570px;left:100px"" onclick="changeImg(-1)" >
+    <input type="button" value="清空坐标数据" style="position:absolute;top:570px;left:200px" onclick="cleardata()" >
+    <input type="button" value="整车喷漆" style="position:absolute;top:570px;left:310px" onclick="zhengChePenqi(1)" >
+    <div  style="position:absolute;top:570px;left:450px" id="disindex" >0</div>
+    <div  id="data" style="width:1000px;position:absolute;top:500px;padding:5px"></div>
+</div>
+<script type="text/javascript" src="raphael.js"></script>
+<script type="text/javascript" src="carPath.js"></script>
+<script type="text/javascript">
+	var direction = 0;
+	var R ;
+	var sels = {};
+	var scr;
+	var markColor = "#228B22"; //覆盖颜色
+	var markAlpha = 0.5; //覆盖透明度
+
+	var myhint = document.getElementById("data");
+	var carImg = document.getElementById("carImg");
+	var disindex = document.getElementById("disindex");
+
+	function changeImg(p){
+		var carImg = document.getElementById("carImg"+direction);
+		carImg.style.display = "none";
+		var len = imgList.length-1;
+		if(p>0){
+			direction = direction+1>len?0:(direction+1);
+		}else{
+			direction = direction-1<0?len:(direction-1);
+		}
+        carImg = document.getElementById("carImg"+direction);
+		carImg.style.display = "";
+		drawArea(R,direction,car);
+	}
+
+	function xuanzhuan(){
+		changeImg(1);
+		scr = setTimeout("xuanzhuan()",200);
+	}
+
+	window.onload = function () {
+		R = Raphael("map", 1500, 550);
+		drawArea(R,0,car);
+		var main = document.getElementById("main");
+		setTouch(main);
+		//getZuobiao();
+	}
+
+	function getZuobiao(){
+		  document.addEventListener("click",function(e){
+			  var obj = e.srcElement||e.target;
+			  if(obj.nodeName=='svg'||obj.nodeName=='path'){
+				myhint.innerHTML+=e.clientX+","+e.clientY+",";
+			  }
+			  
+		  });
+	}
+	
+	function cleardata(){
+		myhint.innerHTML = "";
+	}
+
+	function drawArea(R,index,car){
+		R.clear();
+		paintMap(R,index);
+		for (var state in car) {
+			car[state]['path'].color = Raphael.getColor(0.9);
+			(function (st, state) {
+				//获取当前图形的中心坐标
+				var xx = st.getBBox().x + (st.getBBox().width / 2);
+				var yy = st.getBBox().y + (st.getBBox().height / 2);
+				st.touchstart(
+				    function(e){
+                        st.startx = e.touches[0].clientX;
+				    }
+				);
+
+        st.touchmove(
+					function(e){
+					    e.preventDefault();
+					    e.stopPropagation();
+                        var xx = e.touches[0].clientX;
+                        var x = st.startx;
+                        var _d = 5;
+                        if(xx-x>_d){
+                            changeImg(1);
+                            st.startx = xx;
+                        }else if (x-xx>_d){
+                            changeImg(-1);
+                            st.startx = xx;
+                        }
+					}
+				);
+				st[0].onclick = function () {
+				   // st.animate({fill: st.color, stroke: "#eee"}, 500);
+				   //return;
+				   var attr = {
+						"fill": markColor,
+						"fill-opacity":markAlpha,
+						"stroke": "#eee",
+						"stroke-width": 0,
+						"stroke-opacity":0,
+						"stroke-linejoin": "round"
+					};
+				   var s = 1;
+				   if(sels[car[state]['code']]){
+					   attr['fill-opacity'] = 0;
+					   delete sels[car[state]['code']];
+					   s = 0;
+				   }else{
+					   attr['fill-opacity'] = markAlpha;
+					   sels[car[state]['code']] = 1;
+					   s = 1;
+				   }
+
+					//st.attr(attr);
+					st.animate(attr, 500);
+					R.safari();
+          //window.myObj.fun1FromAndroid("66666666666666");
+					//alert(car[state]['name']+","+car[state]['code']+","+s);
+				};
+
+                //保存状态
+				if(sels[car[state]['code']]){
+					var attr = {
+						"fill": markColor,
+						"fill-opacity":markAlpha,
+						"stroke": "#eee",
+						"stroke-width": 0,
+						"stroke-opacity":0,
+						"stroke-linejoin": "round"
+					};
+					st.attr(attr);
+					R.safari();
+				}
+
+			 })(car[state]['path'], state);
+		}
+	}
+
+	function setTouch(dom){
+		dom.addEventListener('touchstart',touch,false);
+		dom.addEventListener('touchmove',touch,false);
+		dom.addEventListener('touchend',touch,false);
+		var x = -1;
+		function touch (event){
+			var event = event || window.event;
+			//oInp.innerHTML ="Touch started (" + event.touches[0].clientX +"," + event.touches[0].clientY +")";
+			switch(event.type){
+				case "touchstart":
+					x = event.touches[0].clientX;
+					break;
+				case "touchend":
+					break;
+				case "touchmove":
+					event.preventDefault();
+					var xx = event.touches[0].clientX;
+					var _d = 5;
+					if(xx-x>_d){
+					    changeImg(1);
+					    x = xx;
+					}else if (x-xx>_d){
+					    changeImg(-1);
+					    x = xx;
+					}
+
+					break;
+			}
+		}
+	 }
+
+    //整车喷漆
+    function zhengChePenqi(s){
+        var str = "";
+        for (var state in car) {
+            var c = car[state]['code'];
+            if(s){
+                sels[c]=1;
+            }else{
+                delete sels[c];
+            }
+            str +=car[state]['name']+","+car[state]['code'];
+        }
+       // alert(str);
+        drawArea(R,direction,car);
+    }
+</script>
+
+</html>
